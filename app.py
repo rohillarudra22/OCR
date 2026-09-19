@@ -100,7 +100,7 @@ def process_scan():
 
     # 3. Validate against Legal Metrology Rules
     validator = LegalMetrologyValidator(parsed_data, category)
-    validation_result = validator.validate()
+    validation_result = validator.evaluate()
 
     # 4. Save audit log into DB
     conn = get_db_connection()
