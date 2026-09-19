@@ -10,7 +10,7 @@ from werkzeug.security import check_password_hash
 
 from database.db import get_db_connection, init_db, save_scan_record
 from ml_engine.ocr_pipeline import extract_text_from_images
-from ml_engine.parser import parse_extracted_text
+from ml_engine.parser import parse_metrology_data as parse_extracted_text
 from rules_engine.validator import LegalMetrologyValidator
 
 app = Flask(__name__)
