@@ -283,7 +283,7 @@
 
       <!-- Import Tab Content -->
       <div id="importTabContent">
-        <form id="auditForm" enctype="multipart/form-data">
+        <form id="auditForm" action="/process-scan" method="POST" enctype="multipart/form-data"></form>
           <!-- Commodity Category -->
           <div class="field-group">
             <label class="field-label">Commodity Category</label>
@@ -421,10 +421,8 @@
     setupUpload('frontFile', 'frontName', 'frontThumb');
     setupUpload('backFile', 'backName', 'backThumb');
 
-    // Submit Logic with Clean Status Transition
-    document.getElementById('auditForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-
+    // Direct Browser Form Submit
+    document.getElementById('auditForm').addEventListener('submit', function() {
       const form = document.getElementById('auditForm');
       const loader = document.getElementById('scanLoading');
       const stepText = document.getElementById('loadingStep');
@@ -440,36 +438,13 @@
         "Generating compliance audit dossier..."
       ];
       let stepIdx = 0;
-      const stepInterval = setInterval(() => {
+      setInterval(() => {
         if (stepIdx < steps.length) {
           stepText.innerText = steps[stepIdx++];
         }
       }, 700);
-
-      const formData = new FormData(this);
-
-      try {
-        const res = await fetch('/process-scan', {
-          method: 'POST',
-          body: formData
-        });
-        const data = await res.json();
-        clearInterval(stepInterval);
-
-        if (res.ok && data.redirect_url) {
-          window.location.href = data.redirect_url;
-        } else {
-          alert('Scan failed: ' + (data.error || 'Server error'));
-          form.style.display = 'block';
-          loader.style.display = 'none';
-        }
-      } catch (err) {
-        clearInterval(stepInterval);
-        alert('Network communication error: ' + err.message);
-        form.style.display = 'block';
-        loader.style.display = 'none';
-      }
     });
+   
     let stream = null;
 let frontBlob = null;
 let backBlob = null;
