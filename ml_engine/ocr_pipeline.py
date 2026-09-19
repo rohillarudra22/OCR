@@ -41,14 +41,19 @@ def preprocess_for_high_accuracy(image_path):
 
     return thresh
 
-def extract_text_from_images(front_path, back_path):
+def extract_text_from_images(front_path, back_path=None):
     """
-    Dual-pass bilingual OCR (English + Hindi) with automatic page segmentation.
+    Handles both list input [front, back] and separate arguments (front, back).
     """
-    front_proc = preprocess_for_high_accuracy(front_path)
-    back_proc = preprocess_for_high_accuracy(back_path)
+    # Agar app.py ne ek list [front_path, back_path] bheji ho
+    if isinstance(front_path, (list, tuple)):
+        paths = front_path
+        front_path = paths[0] if len(paths) > 0 else None
+        back_path = paths[1] if len(paths) > 1 else None
 
-    # PSM 3: fully automatic layout analysis
+    front_proc = preprocess_for_high_accuracy(front_path) if front_path else None
+    back_proc = preprocess_for_high_accuracy(back_path) if back_path else None
+
     ocr_config = r'--oem 3 --psm 3 -l eng+hin'
 
     front_text = ""
@@ -60,9 +65,10 @@ def extract_text_from_images(front_path, back_path):
     if back_proc is not None:
         back_text = pytesseract.image_to_string(back_proc, config=ocr_config)
 
-    # Accuracy fallback: agar back panel par text kam mila toh PSM 11 (sparse text) se re-scan
+    # Accuracy fallback: agar back panel par text kam mila toh PSM 11 se re-scan
     if len(back_text.strip()) < 40 and back_proc is not None:
         fallback_config = r'--oem 3 --psm 11 -l eng+hin'
         back_text += "\n" + pytesseract.image_to_string(back_proc, config=fallback_config)
 
-    return front_text, back_text
+    # app.py single string expect kar raha hai: raw_ocr_text
+    return f"{front_text}\n{back_text}".strip()
