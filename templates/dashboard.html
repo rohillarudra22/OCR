@@ -522,37 +522,45 @@ function snapPhoto(panel) {
   }, 'image/jpeg', 0.95);
 }
 
-async function submitLiveCameraScan() {
-  if (!frontBlob || !backBlob) {
-    alert("Kripya dono panels (Front aur Back) ki photo snap karein!");
-    return;
-  }
-  const category = document.querySelector('select[name="category"]').value || "Food & Beverages";
-  const formData = new FormData();
-  formData.append('category', category);
-  formData.append('front_image', frontBlob, 'camera_front.jpg');
-  formData.append('back_image', backBlob, 'camera_back.jpg');
+function submitLiveCameraScan() {
+      if (!frontBlob || !backBlob) {
+        alert("Kripya dono panels (Front aur Back) ki photo snap karein!");
+        return;
+      }
 
-  stopCamera();
-  document.getElementById('importTabContent').style.display = 'block';
-  document.getElementById('cameraTabContent').style.display = 'none';
-  document.getElementById('auditForm').style.display = 'none';
-  document.getElementById('scanLoading').style.display = 'block';
+      // Existing audit form select karein
+      const form = document.getElementById('auditForm') || document.querySelector('form');
+      if (!form) {
+        alert("Form element nahi mila!");
+        return;
+      }
 
-  try {
-    const res = await fetch('/process-scan', { method: 'POST', body: formData });
-    const data = await res.json();
-    if (res.ok && data.redirect_url) {
-      window.location.href = data.redirect_url;
-    } else {
-      alert("Scan failed: " + (data.error || "Server error"));
-      location.reload();
+      const dataTransferFront = new DataTransfer();
+      const dataTransferBack = new DataTransfer();
+
+      const frontFile = new File([frontBlob], "camera_front.jpg", { type: "image/jpeg" });
+      const backFile = new File([backBlob], "camera_back.jpg", { type: "image/jpeg" });
+
+      dataTransferFront.items.add(frontFile);
+      dataTransferBack.items.add(backFile);
+
+      // File inputs ko camera snapshots assign karein
+      const frontInput = form.querySelector('input[name="front_image"]');
+      const backInput = form.querySelector('input[name="back_image"]');
+
+      if (frontInput && backInput) {
+        frontInput.files = dataTransferFront.files;
+        backInput.files = dataTransferBack.files;
+        stopCamera();
+        
+        // Show loading spinner if present and submit normally
+        const submitBtn = document.getElementById('runScanBtn');
+        if (submitBtn) submitBtn.innerHTML = "Processing Metrology Scan...";
+        form.submit();
+      } else {
+        alert("Image input fields form mein nahi mile!");
+      }
     }
-  } catch (e) {
-    alert("Network error: " + e.message);
-    location.reload();
-  }
-}
   </script>
 </body>
 </html>
