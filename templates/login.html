@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inspector Sign In | Legal Metrology Compliance Engine</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090b11;
+      --card-bg: rgba(21, 24, 38, 0.75);
+      --border: rgba(255, 255, 255, 0.08);
+      --neon-cyan: #00f2fe;
+      --neon-pink: #ff2a85;
+      --neon-blue: #3b82f6;
+      --text-main: #f8fafc;
+      --text-muted: #8491b0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 20% 20%, rgba(121, 40, 202, 0.22) 0%, transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(0, 242, 254, 0.18) 0%, transparent 45%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Ambient background grid lines */
+    body::before {
+      content: '';
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      top: -50%;
+      left: -50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 440px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .login-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 2.75rem 2.25rem;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7),
+                  0 0 30px -10px rgba(0, 242, 254, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Top Accent Line */
+    .login-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan));
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(0, 242, 254, 0.1);
+      border: 1px solid rgba(0, 242, 254, 0.25);
+      padding: 0.35rem 0.85rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--neon-cyan);
+      margin-bottom: 1.25rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .login-header h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 0.4rem;
+      letter-spacing: -0.02em;
+    }
+
+    .login-header p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.5;
+      margin-bottom: 2rem;
+    }
+
+    .alert {
+      padding: 0.85rem 1rem;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.35rem;
+      position: relative;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #cbd5e1;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.02em;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 1.1rem;
+      color: #64748b;
+      font-size: 1rem;
+      transition: color 0.2s;
+    }
+
+    .form-input {
+      width: 100%;
+      background: rgba(15, 18, 30, 0.85);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 0.95rem 1.1rem 0.95rem 2.85rem;
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .form-input:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
+      background: rgba(18, 22, 38, 0.95);
+    }
+
+    .form-input:focus + .input-icon {
+      color: var(--neon-cyan);
+    }
+
+    .toggle-pw {
+      position: absolute;
+      right: 1.1rem;
+      color: #64748b;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+    }
+    .toggle-pw:hover { color: #fff; }
+
+    /* Sign In Button */
+    .btn-login {
+      width: 100%;
+      padding: 1.05rem;
+      background: linear-gradient(90deg, #1d4ed8 0%, #3b82f6 50%, #00f2fe 100%);
+      background-size: 200% auto;
+      border: none;
+      border-radius: 14px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      margin-top: 1.75rem;
+      box-shadow: 0 10px 25px rgba(29, 78, 216, 0.35);
+      transition: all 0.3s;
+    }
+
+    .btn-login:hover {
+      background-position: right center;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(0, 242, 254, 0.4);
+    }
+
+    /* Quick Demo Auto-fill Pill */
+    .demo-pill {
+      margin-top: 1.75rem;
+      padding: 0.85rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .demo-pill:hover {
+      border-color: var(--neon-cyan);
+      background: rgba(0, 242, 254, 0.05);
+      color: var(--neon-cyan);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <div class="login-card">
+      <div class="brand-badge">
+        <i class="fa-solid fa-scale-balanced"></i> LM-PCR 2011 Compliance
+      </div>
+
+      <div class="login-header">
+        <h1>Inspector Portal</h1>
+        <p>Authenticate to access the legal metrology packaging inspection workspace.</p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" action="/login">
+        <!-- Inspector ID Field -->
+        <div class="form-group">
+          <label class="form-label">Inspector ID / Username</label>
+          <div class="input-wrapper">
+            <input type="text" name="username" id="usernameInput" class="form-input" placeholder="e.g. rudra" required autofocus>
+            <i class="fa-solid fa-user-shield input-icon"></i>
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div class="form-group">
+          <label class="form-label">Secure Access Key</label>
+          <div class="input-wrapper">
+            <input type="password" name="password" id="passwordInput" class="form-input" placeholder="••••••••" required>
+            <i class="fa-solid fa-lock input-icon"></i>
+            <i class="fa-regular fa-eye toggle-pw" id="togglePassword"></i>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-login">
+          <span>Authenticate & Access</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+
+      <!-- 1-Click Fill Demo Credentials for presentation -->
+      <div class="demo-pill" onclick="autoFillDemo()">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <span>Demo: Click here to auto-fill <strong>rudra</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Password visibility toggle
+    const togglePw = document.getElementById('togglePassword');
+    const pwInput = document.getElementById('passwordInput');
+
+    togglePw.addEventListener('click', function() {
+      const isPassword = pwInput.getAttribute('type') === 'password';
+      pwInput.setAttribute('type', isPassword ? 'text' : 'password');
+      this.classList.toggle('fa-eye');
+      this.classList.toggle('fa-eye-slash');
+    });
+
+    // Auto-fill demo credentials on single click
+    function autoFillDemo() {
+      document.getElementById('usernameInput').value = 'rudra';
+      document.getElementById('passwordInput').value = 'password';
+      document.getElementById('usernameInput').focus();
+    }
+  </script>
+</body>
+</html>

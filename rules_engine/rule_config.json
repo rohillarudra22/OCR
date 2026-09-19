@@ -1,0 +1,41 @@
+{
+  "valid_metric_units": [
+    "g", "kg", "ml", "l", "ltr", "litres", "m", "cm", "mm", "units", "n", "u"
+  ],
+  "unit_aliases": {
+    "gm": "g",
+    "gms": "g",
+    "grams": "g",
+    "kilo": "kg",
+    "kilos": "kg",
+    "ltr": "l",
+    "litre": "l",
+    "litres": "l",
+    "milliliter": "ml",
+    "millilitres": "ml"
+  },
+  "mrp_tax_declarations": [
+    "inclusive of all taxes",
+    "incl of all taxes",
+    "incl. of all taxes",
+    "incl. taxes",
+    "incl. all taxes"
+  ],
+  "manufacturer_indicators": [
+    "mfg by",
+    "manufactured by",
+    "packed by",
+    "marketed by",
+    "imported by",
+    "mktd by",
+    "pkd by"
+  ],
+  "date_formats_allowed": [
+    "%m/%Y",
+    "%m-%Y",
+    "%m/%y",
+    "%m-%y",
+    "%b %Y",
+    "%B %Y"
+  ]
+}

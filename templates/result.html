@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Audit Summary - Scan #{{ scan.id }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="navbar">
+    <a href="/dashboard" class="navbar-brand">⚖️ Legal Metrology Compliance Engine</a>
+    <a href="/dashboard" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">New Inspection</a>
+  </div>
+
+  <div class="container">
+    {% if scan.is_compliant %}
+      <div class="status-banner pass">
+        ✓ COMPLIANT: Packaged commodity adheres to The Legal Metrology Rules, 2011.
+      </div>
+    {% else %}
+      <div class="status-banner fail">
+        ✕ NON-COMPLIANT: Statutory violations detected under Rule 6.
+      </div>
+    {% endif %}
+
+    <div class="two-col-grid">
+      <!-- Column 1: Captured Images & Violations -->
+      <div>
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <h3 style="margin-bottom: 1rem;">Detected Regulatory Infractions ({{ violations|length }})</h3>
+          {% if violations %}
+            <ul class="violations-list">
+              {% for item in violations %}
+                <li>{{ item }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p style="color: var(--success); font-weight: 500;">No statutory violations flagged. Ready for retail distribution.</p>
+          {% endif %}
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom: 0.5rem;">Submitted Label Captures</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Category: <strong>{{ scan.category }}</strong></p>
+          <div style="display: flex; gap: 1rem;">
+            <div>
+              <small>Front Face</small>
+              <img src="{{ url_for('static', filename=scan.front_image_path) }}" class="image-preview-card" alt="Front Face">
+            </div>
+            <div>
+              <small>Back / Side Panel</small>
+              <img src="{{ url_for('static', filename=scan.back_image_path) }}" class="image-preview-card" alt="Back Panel">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Column 2: Structured Machine-Readable JSON -->
+      <div>
+        <div class="card">
+          <h3 style="margin-bottom: 0.5rem;">Extracted & Structured Data (JSON)</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+            Standardized key-value pairs derived via optical character recognition.
+          </p>
+          <pre class="code-box">{{ parsed_data | tojson(indent=2) }}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>>

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legal Metrology Compliance Engine</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0d0f17;
+      --bg-card: #151824;
+      --bg-input: #1b1f30;
+      --border: #24293e;
+      --text-main: #f8fafc;
+      --text-muted: #8491b0;
+      --neon-cyan: #00f2fe;
+      --neon-pink: #ff2a85;
+      --neon-purple: #7928ca;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* Top Navbar */
+    .navbar {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 1.1rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .brand-icon {
+      color: #fbbf24;
+      font-size: 1.35rem;
+    }
+    .user-actions {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      font-size: 0.95rem;
+    }
+    .officer-tag { color: var(--text-muted); }
+    .officer-name { color: #fff; font-weight: 700; }
+    .signout-btn {
+      color: #ff4b72;
+      text-decoration: none;
+      font-weight: 700;
+      transition: opacity 0.2s;
+    }
+    .signout-btn:hover { opacity: 0.8; }
+
+    /* Main Container */
+    .main-container {
+      flex: 1;
+      max-width: 1000px;
+      width: 100%;
+      margin: 3rem auto;
+      padding: 0 1.5rem;
+    }
+
+    /* Central Audit Card */
+    .audit-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+    .audit-title {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 0.4rem;
+    }
+    .audit-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Tabs */
+    .tab-bar {
+      display: flex;
+      gap: 2rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+    .tab-item {
+      padding-bottom: 0.85rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s;
+    }
+    .tab-item.active {
+      color: var(--neon-cyan);
+    }
+    .tab-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 2.5px;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink));
+      border-radius: 4px;
+    }
+
+    /* Form Fields */
+    .field-group { margin-bottom: 2rem; }
+    .field-label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #e2e8f0;
+      margin-bottom: 0.65rem;
+    }
+    .field-select {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.95rem 1.2rem;
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field-select:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.2);
+    }
+
+    /* Uploaders Grid */
+    .uploaders-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.75rem;
+      margin-bottom: 2.5rem;
+    }
+    .upload-pane {
+      background: var(--bg-input);
+      border: 1.5px dashed var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      min-height: 140px;
+      transition: border-color 0.2s;
+    }
+    .upload-pane:hover {
+      border-color: var(--neon-cyan);
+    }
+    .upload-pane input[type="file"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .file-btn-mock {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #252b42;
+      border: 1px solid #3b4366;
+      color: #fff;
+      padding: 0.5rem 0.9rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      width: fit-content;
+      margin-bottom: 0.6rem;
+    }
+    .file-name-txt {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .thumb-preview {
+      max-height: 100px;
+      object-fit: contain;
+      border-radius: 8px;
+      margin-top: 0.75rem;
+      display: none;
+    }
+
+    /* Submit Button */
+    .scan-btn {
+      width: 100%;
+      padding: 1.15rem;
+      background: linear-gradient(90deg, #1d4ed8 0%, #3b82f6 50%, #00f2fe 100%);
+      background-size: 200% auto;
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      box-shadow: 0 10px 25px rgba(29, 78, 216, 0.35);
+      transition: all 0.3s;
+    }
+    .scan-btn:hover {
+      background-position: right center;
+      transform: translateY(-1.5px);
+      box-shadow: 0 12px 30px rgba(0, 242, 254, 0.4);
+    }
+
+    /* Loader */
+    .loader-box {
+      display: none;
+      text-align: center;
+      padding: 2.5rem;
+    }
+    .pulse-ring {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-top: 4px solid var(--neon-cyan);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1.25rem;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Live Camera Container */
+    #cameraTabContent {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <header class="navbar">
+    <div class="brand">
+      <i class="fa-solid fa-scale-balanced brand-icon"></i>
+      <span>Legal Metrology Compliance Engine</span>
+    </div>
+    <div class="user-actions">
+      <span class="officer-tag">Officer: <strong class="officer-name">{{ session.get('username', 'rudra') | capitalize }}</strong></span>
+      <a href="/logout" class="signout-btn">Sign Out</a>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="main-container">
+    <div class="audit-box">
+      <h1 class="audit-title">Audit Packaged Commodity</h1>
+      <p class="audit-desc">Select product category and upload packaging images to initiate Rule 6 statutory validation.</p>
+
+      <!-- Navigation Tabs -->
+      <div class="tab-bar">
+        <div class="tab-item active" id="btnTabImport" onclick="switchTab('import')">Import Images</div>
+        <div class="tab-item" id="btnTabCamera" onclick="switchTab('camera')">Live Camera Capture</div>
+      </div>
+
+      <!-- Import Tab Content -->
+      <div id="importTabContent">
+        <form id="auditForm" enctype="multipart/form-data">
+          <!-- Commodity Category -->
+          <div class="field-group">
+            <label class="field-label">Commodity Category</label>
+            <select name="category" class="field-select" required>
+              <option value="" disabled selected>Select Category...</option>
+              <option value="Food & Beverages">Food & Beverages</option>
+              <option value="Cosmetics & Personal Care">Cosmetics & Personal Care</option>
+              <option value="Pharmaceuticals & Wellness">Pharmaceuticals & OTC Packaging</option>
+              <option value="Consumer Electronics">Consumer Electronics</option>
+            </select>
+          </div>
+
+          <!-- Dual Upload Area -->
+          <div class="uploaders-grid">
+            <!-- Front Image -->
+            <div>
+              <label class="field-label">Front Package Face (Brand, Identity, Net Qty)</label>
+              <div class="upload-pane">
+                <div class="file-btn-mock"><i class="fa-solid fa-cloud-arrow-up"></i> Choose File</div>
+                <div class="file-name-txt" id="frontName">No file chosen</div>
+                <img id="frontThumb" class="thumb-preview" alt="Front Preview">
+                <input type="file" name="front_image" id="frontFile" accept="image/*" required>
+              </div>
+            </div>
+
+            <!-- Back Image -->
+            <div>
+              <label class="field-label">Back / Side Panel (MRP, Mfg Date, Address, Consumer Care)</label>
+              <div class="upload-pane">
+                <div class="file-btn-mock"><i class="fa-solid fa-cloud-arrow-up"></i> Choose File</div>
+                <div class="file-name-txt" id="backName">No file chosen</div>
+                <img id="backThumb" class="thumb-preview" alt="Back Preview">
+                <input type="file" name="back_image" id="backFile" accept="image/*" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <button type="submit" class="scan-btn" id="submitBtn">
+            <i class="fa-solid fa-play"></i> Run Metrology Compliance Scan
+          </button>
+        </form>
+
+        <!-- Loading State -->
+        <div class="loader-box" id="scanLoading">
+          <div class="pulse-ring"></div>
+          <h3 style="font-size: 1.15rem; color: #fff; margin-bottom: 0.35rem;">Running Compliance Pipeline...</h3>
+          <p style="color: var(--neon-cyan); font-size: 0.85rem;" id="loadingStep">Executing OCR & Rule 6 Evaluation...</p>
+        </div>
+      </div>
+
+      <!-- Camera Tab Content (Placeholder) -->
+      <div id="cameraTabContent">
+        <i class="fa-solid fa-camera" style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--neon-cyan);"></i>
+        <p>Webcam direct-capture stream ready for hardware camera connection.</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Tab Switching
+    function switchTab(tab) {
+      const importContent = document.getElementById('importTabContent');
+      const cameraContent = document.getElementById('cameraTabContent');
+      const tabImport = document.getElementById('btnTabImport');
+      const tabCamera = document.getElementById('btnTabCamera');
+
+      if (tab === 'import') {
+        importContent.style.display = 'block';
+        cameraContent.style.display = 'none';
+        tabImport.classList.add('active');
+        tabCamera.classList.remove('active');
+      } else {
+        importContent.style.display = 'none';
+        cameraContent.style.display = 'block';
+        tabCamera.classList.add('active');
+        tabImport.classList.remove('active');
+      }
+    }
+
+    // Interactive File Uploaders with Thumbnails
+    function setupUpload(inputId, nameId, thumbId) {
+      const input = document.getElementById(inputId);
+      const nameTxt = document.getElementById(nameId);
+      const thumb = document.getElementById(thumbId);
+
+      input.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+          nameTxt.innerText = this.files[0].name;
+          nameTxt.style.color = '#00f2fe';
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            thumb.src = e.target.result;
+            thumb.style.display = 'block';
+          };
+          reader.readAsDataURL(this.files[0]);
+        }
+      });
+    }
+
+    setupUpload('frontFile', 'frontName', 'frontThumb');
+    setupUpload('backFile', 'backName', 'backThumb');
+
+    // Submit Logic with Clean Status Transition
+    document.getElementById('auditForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const form = document.getElementById('auditForm');
+      const loader = document.getElementById('scanLoading');
+      const stepText = document.getElementById('loadingStep');
+
+      form.style.display = 'none';
+      loader.style.display = 'block';
+
+      const steps = [
+        "Preprocessing packaging panels...",
+        "Executing dual-stream OCR extraction...",
+        "Extracting mandatory statutory declarations...",
+        "Validating under Legal Metrology Rules, 2011...",
+        "Generating compliance audit dossier..."
+      ];
+      let stepIdx = 0;
+      const stepInterval = setInterval(() => {
+        if (stepIdx < steps.length) {
+          stepText.innerText = steps[stepIdx++];
+        }
+      }, 700);
+
+      const formData = new FormData(this);
+
+      try {
+        const res = await fetch('/process-scan', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        clearInterval(stepInterval);
+
+        if (res.ok && data.redirect_url) {
+          window.location.href = data.redirect_url;
+        } else {
+          alert('Scan failed: ' + (data.error || 'Server error'));
+          form.style.display = 'block';
+          loader.style.display = 'none';
+        }
+      } catch (err) {
+        clearInterval(stepInterval);
+        alert('Network communication error: ' + err.message);
+        form.style.display = 'block';
+        loader.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
