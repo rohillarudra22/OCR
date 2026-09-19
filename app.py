@@ -103,9 +103,7 @@ def process_scan():
     validation_result = validator.evaluate()
 
     # 4. Save audit log into DB
-    conn = get_db_connection()
-    scan_id = save_scan_record(conn, session["user_id"], category, f"uploads/{front_filename}", f"uploads/{back_filename}", raw_ocr_text, validation_result["compliant"], json.dumps(validation_result["violations"]))
-    conn.close()
+    scan_id = save_scan_record(session["user_id"], category, f"uploads/{front_filename}", f"uploads/{back_filename}", raw_ocr_text, json.dumps(parsed_data), validation_result["compliant"], json.dumps(validation_result["violations"]))
 
     session["scan_id"] = scan_id
     return redirect(url_for("result_view", scan_id=scan_id))
