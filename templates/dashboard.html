@@ -335,13 +335,47 @@
         </div>
       </div>
 
-      <!-- Camera Tab Content (Placeholder) -->
-      <div id="cameraTabContent">
-        <i class="fa-solid fa-camera" style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--neon-cyan);"></i>
-        <p>Webcam direct-capture stream ready for hardware camera connection.</p>
-      </div>
+      <!-- Live Camera Tab Content -->
+<div id="cameraTabContent">
+  <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem;">
+    <button type="button" class="btn-mock" onclick="startCamera()" style="background: #1d4ed8; color: #fff; padding: 0.6rem 1.2rem; border-radius: 8px; border:none; cursor:pointer; font-weight:700;">
+      <i class="fa-solid fa-video"></i> Start Camera
+    </button>
+    <button type="button" class="btn-mock" onclick="stopCamera()" style="background: #ef4444; color: #fff; padding: 0.6rem 1.2rem; border-radius: 8px; border:none; cursor:pointer; font-weight:700;">
+      <i class="fa-solid fa-video-slash"></i> Stop Camera
+    </button>
+  </div>
+
+  <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
+    <video id="webcamVideo" autoplay playsinline style="width: 100%; max-width: 480px; height: auto; border-radius: 12px; border: 2px solid var(--neon-cyan); display: none;"></video>
+    <canvas id="cameraCanvas" style="display:none;"></canvas>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+    <!-- Front Snap -->
+    <div style="background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center;">
+      <h4 style="font-size: 0.85rem; margin-bottom: 0.5rem; color: #fff;">1. Capture Front Panel</h4>
+      <button type="button" onclick="snapPhoto('front')" style="background: var(--neon-cyan); color: #000; font-weight: 700; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; margin-bottom: 0.5rem;">
+        <i class="fa-solid fa-camera"></i> Snap Front
+      </button>
+      <img id="camFrontPreview" style="max-height: 120px; width: auto; border-radius: 8px; display: none; margin: 0 auto;" />
     </div>
-  </main>
+
+    <!-- Back Snap -->
+    <div style="background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center;">
+      <h4 style="font-size: 0.85rem; margin-bottom: 0.5rem; color: #fff;">2. Capture Back Panel</h4>
+      <button type="button" onclick="snapPhoto('back')" style="background: var(--neon-pink); color: #fff; font-weight: 700; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; margin-bottom: 0.5rem;">
+        <i class="fa-solid fa-camera"></i> Snap Back
+      </button>
+      <img id="camBackPreview" style="max-height: 120px; width: auto; border-radius: 8px; display: none; margin: 0 auto;" />
+    </div>
+  </div>
+
+  <button type="button" class="scan-btn" onclick="submitLiveCameraScan()" style="margin-top: 1.5rem;">
+    <i class="fa-solid fa-play"></i> Run Metrology Scan from Live Snaps
+  </button>
+</div>
+      
 
   <script>
     // Tab Switching
@@ -436,6 +470,89 @@
         loader.style.display = 'none';
       }
     });
+    let stream = null;
+let frontBlob = null;
+let backBlob = null;
+
+async function startCamera() {
+  const video = document.getElementById('webcamVideo');
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
+      audio: false
+    });
+    video.srcObject = stream;
+    video.style.display = 'block';
+  } catch (err) {
+    alert("Camera access denied ya camera device nahi mila: " + err.message);
+  }
+}
+
+function stopCamera() {
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+    document.getElementById('webcamVideo').style.display = 'none';
+  }
+}
+
+function snapPhoto(panel) {
+  const video = document.getElementById('webcamVideo');
+  const canvas = document.getElementById('cameraCanvas');
+  if (!stream || video.videoWidth === 0) {
+    alert("Pehle 'Start Camera' button click karke camera on karein!");
+    return;
+  }
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  canvas.toBlob((blob) => {
+    if (panel === 'front') {
+      frontBlob = blob;
+      const prev = document.getElementById('camFrontPreview');
+      prev.src = URL.createObjectURL(blob);
+      prev.style.display = 'block';
+    } else {
+      backBlob = blob;
+      const prev = document.getElementById('camBackPreview');
+      prev.src = URL.createObjectURL(blob);
+      prev.style.display = 'block';
+    }
+  }, 'image/jpeg', 0.95);
+}
+
+async function submitLiveCameraScan() {
+  if (!frontBlob || !backBlob) {
+    alert("Kripya dono panels (Front aur Back) ki photo snap karein!");
+    return;
+  }
+  const category = document.querySelector('select[name="category"]').value || "Food & Beverages";
+  const formData = new FormData();
+  formData.append('category', category);
+  formData.append('front_image', frontBlob, 'camera_front.jpg');
+  formData.append('back_image', backBlob, 'camera_back.jpg');
+
+  stopCamera();
+  document.getElementById('importTabContent').style.display = 'block';
+  document.getElementById('cameraTabContent').style.display = 'none';
+  document.getElementById('auditForm').style.display = 'none';
+  document.getElementById('scanLoading').style.display = 'block';
+
+  try {
+    const res = await fetch('/process-scan', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (res.ok && data.redirect_url) {
+      window.location.href = data.redirect_url;
+    } else {
+      alert("Scan failed: " + (data.error || "Server error"));
+      location.reload();
+    }
+  } catch (e) {
+    alert("Network error: " + e.message);
+    location.reload();
+  }
+}
   </script>
 </body>
 </html>

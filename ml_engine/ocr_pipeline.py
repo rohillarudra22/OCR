@@ -1,72 +1,64 @@
 import os
 import cv2
-import pytesseract
 import numpy as np
+import pytesseract
 
-# Set binary path
-TESSERACT_EXE = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-if os.path.exists(TESSERACT_EXE):
-    pytesseract.pytesseract.tesseract_cmd = TESSERACT_EXE
+# Windows par Tesseract installation path check
+tesseract_cmd_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+if os.path.exists(tesseract_cmd_path):
+    pytesseract.pytesseract.tesseract_cmd = tesseract_cmd_path
 
-# Point TESSDATA_PREFIX to the local project tessdata folder
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-LOCAL_TESSDATA = os.path.join(PROJECT_ROOT, "tessdata")
+def clean_and_enhance_image(image_path):
+    """
+    Advanced OpenCV preprocessing pipeline specifically tuned
+    for curved, glossy, and low-contrast packaging panels.
+    """
+    img = cv2.imread(image_path)
+    if img is None:
+        return None
 
-if os.path.exists(LOCAL_TESSDATA):
-    os.environ["TESSDATA_PREFIX"] = LOCAL_TESSDATA
-
-def preprocess_for_packaging(img: np.ndarray) -> np.ndarray:
-    """Resizes and normalizes contrast for label inspection."""
+    # 1. Image Resolution Check & Auto-Upscaling
+    # Chote statutory text (batch no, MRP) ko enlarge karna
     h, w = img.shape[:2]
-    if max(h, w) > 1600:
-        scale = 1600 / max(h, w)
-        img = cv2.resize(img, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
+    if w < 1200:
+        scaling_factor = 1400.0 / float(w)
+        img = cv2.resize(img, None, fx=scaling_factor, fy=scaling_factor, interpolation=cv2.INTER_CUBIC)
 
+    # 2. Grayscale Conversion
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # 3. CLAHE (Glare aur uneven lighting balance karne ke liye)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    enhanced = clahe.apply(gray)
-    return enhanced
+    contrast_balanced = clahe.apply(gray)
 
-def extract_text_from_images(image_paths: list) -> str:
-    """Extracts text using English + Hindi from the configured tessdata directory."""
-    extracted_lines = []
+    # 4. Bilateral Filtering (Noise remove karta hai par text edges sharp rehte hain)
+    denoised = cv2.bilateralFilter(contrast_balanced, d=9, sigmaColor=75, sigmaSpace=75)
 
-    # Detect whether Hindi model is available
-    hin_exists = os.path.exists(os.path.join(LOCAL_TESSDATA, "hin.traineddata"))
-    lang = "eng+hin" if hin_exists else "eng"
+    # 5. Adaptive Gaussian Thresholding (Text aur colored background ko cleanly split karna)
+    binarized = cv2.adaptiveThreshold(
+        denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 31, 9
+    )
 
-    for idx, path in enumerate(image_paths):
-        extracted_lines.append(f"--- IMAGE {idx + 1} START ---")
+    return binarized
 
-        if not os.path.exists(path):
-            extracted_lines.append(f"[Error: File not found: {path}]")
-            extracted_lines.append(f"--- IMAGE {idx + 1} END ---")
-            continue
+def extract_text_from_images(front_path, back_path):
+    """
+    Preprocesses both packaging panels and extracts bilingual text using Tesseract 5.
+    """
+    front_clean = clean_and_enhance_image(front_path)
+    back_clean = clean_and_enhance_image(back_path)
 
-        img = cv2.imread(path)
-        if img is None:
-            extracted_lines.append(f"[Error: Unreadable image: {path}]")
-            extracted_lines.append(f"--- IMAGE {idx + 1} END ---")
-            continue
+    # PSM 3: Automatic Page Segmentation (packaging blocks ke liye best)
+    # eng+hin: English aur Hindi Devanagari dono read karne ke liye
+    custom_config = r'--oem 3 --psm 3 -l eng+hin'
 
-        processed = preprocess_for_packaging(img)
+    front_text = ""
+    back_text = ""
 
-        # Mode 1: Sparse text mode (catches dispersed fields: MRP, dates, net weight)
-        text = pytesseract.image_to_string(processed, lang=lang, config=r'--oem 3 --psm 11').strip()
+    if front_clean is not None:
+        front_text = pytesseract.image_to_string(front_clean, config=custom_config)
 
-        # Mode 2: Uniform block mode fallback
-        if len(text) < 15:
-            text = pytesseract.image_to_string(processed, lang=lang, config=r'--oem 3 --psm 6').strip()
+    if back_clean is not None:
+        back_text = pytesseract.image_to_string(back_clean, config=custom_config)
 
-        # Mode 3: Raw image fallback
-        if len(text) < 15:
-            text = pytesseract.image_to_string(img, lang=lang, config=r'--oem 3 --psm 3').strip()
-
-        for line in text.splitlines():
-            cleaned = line.strip()
-            if cleaned:
-                extracted_lines.append(cleaned)
-
-        extracted_lines.append(f"--- IMAGE {idx + 1} END ---")
-
-    return "\n".join(extracted_lines)
+    return front_text, back_text
