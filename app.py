@@ -69,54 +69,46 @@ def dashboard():
 @app.route("/process-scan", methods=["POST"])
 def process_scan():
     if "user_id" not in session:
-        return jsonify({"error": "Unauthorized"}), 401
+        return redirect(url_for("login"))
 
     category = request.form.get("category")
     front_file = request.files.get("front_image")
     back_file = request.files.get("back_image")
 
-    if not category or not front_file or not back_file:
-        return jsonify({"error": "Category, front image, and back image are all required."}), 400
+    if not category or not front_file or not back_file or front_file.filename == "" or back_file.filename == "":
+        flash("Category, front image, and back image are all required.", "error")
+        return redirect(url_for("dashboard"))
 
     if not (allowed_file(front_file.filename) and allowed_file(back_file.filename)):
-        return jsonify({"error": "Invalid file format. Upload PNG, JPG, or JPEG."}), 400
+        flash("Invalid file format. Upload PNG, JPG, or JPEG.", "error")
+        return redirect(url_for("dashboard"))
 
     # Save images securely
     front_filename = secure_filename(f"front_{front_file.filename}")
     back_filename = secure_filename(f"back_{back_file.filename}")
-
     front_path = os.path.join(app.config["UPLOAD_FOLDER"], front_filename)
     back_path = os.path.join(app.config["UPLOAD_FOLDER"], back_filename)
 
     front_file.save(front_path)
     back_file.save(back_path)
 
-    # 1. Run OCR
-    raw_ocr_text = extract_text_from_images([front_path, back_path])
+    # 1. Extract text using OCR pipeline
+    raw_ocr_text = extract_text_from_images(front_path, back_path)
 
-    # 2. Parse extracted text to JSON
-    parsed_json = parse_extracted_text(raw_ocr_text)
+    # 2. Parse extracted text
+    parsed_data = parse_extracted_text(raw_ocr_text)
 
     # 3. Validate against Legal Metrology Rules
-    validator = LegalMetrologyValidator(parsed_json, category)
-    validation_result = validator.evaluate()
+    validator = LegalMetrologyValidator(parsed_data, category)
+    validation_result = validator.validate()
 
-    # 4. Save audit log into SQL DB
-    scan_id = save_scan_record(
-        user_id=session["user_id"],
-        category=category,
-        front_path=f"uploads/{front_filename}",
-        back_path=f"uploads/{back_filename}",
-        raw_text=raw_ocr_text,
-        parsed_json_str=json.dumps(parsed_json),
-        is_compliant=validation_result["compliant"],
-        violations_str=json.dumps(validation_result["violations"])
-    )
+    # 4. Save audit log into DB
+    conn = get_db_connection()
+    scan_id = save_scan_record(conn, session["user_id"], category, f"uploads/{front_filename}", f"uploads/{back_filename}", raw_ocr_text, validation_result["compliant"], json.dumps(validation_result["violations"]))
+    conn.close()
 
-    return jsonify({
-        "scan_id": scan_id,
-        "redirect_url": url_for("result_view", scan_id=scan_id)
-    })
+    session["scan_id"] = scan_id
+    return redirect(url_for("result_view", scan_id=scan_id))
 
 @app.route("/result/<int:scan_id>")
 def result_view(scan_id):
@@ -124,16 +116,21 @@ def result_view(scan_id):
         return redirect(url_for("login"))
 
     conn = get_db_connection()
-    scan = conn.execute("SELECT * FROM audit_scans WHERE id = ? AND user_id = ?", 
-                        (scan_id, session["user_id"])).fetchone()
+    scan = conn.execute(
+        "SELECT * FROM audit_scans WHERE id = ? AND user_id = ?",
+        (scan_id, session["user_id"])
+    ).fetchone()
     conn.close()
 
     if not scan:
         flash("Scan record not found.", "warning")
         return redirect(url_for("dashboard"))
 
-    parsed_data = json.loads(scan["parsed_json"])
-    violations = json.loads(scan["violations"])
+    # Gracefully handle column names if parsed_json or validation_errors is stored
+    parsed_data = json.loads(scan["parsed_json"]) if "parsed_json" in scan.keys() and scan["parsed_json"] else {}
+    violations = json.loads(scan["validation_errors"]) if "validation_errors" in scan.keys() and scan["validation_errors"] else (
+        json.loads(scan["violations"]) if "violations" in scan.keys() and scan["violations"] else []
+    )
 
     return render_template(
         "result.html",
