@@ -283,7 +283,7 @@
 
       <!-- Import Tab Content -->
       <div id="importTabContent">
-         <form id="auditForm" action="/process-scan" method="POST" enctype="multipart/form-data" novalidate></form>
+         <form id="auditForm" action="/process-scan" method="POST" enctype="multipart/form-data"></form>
           <!-- Commodity Category -->
           <div class="field-group">
             <label class="field-label">Commodity Category</label>
@@ -322,8 +322,8 @@
           </div>
 
           <!-- Action Button -->
-          <button type="button" class="scan-btn" id="submitBtn" onclick="document.getElementById('auditForm').submit();">
-           <i class="fa-solid fa-play"></i> Run Metrology Compliance Scan
+          <button type="submit" class="scan-btn" id="submitBtn">
+            <i class="fa-solid fa-play"></i> Run Metrology Compliance Scan
           </button>
         </form>
 
