@@ -1,5 +1,5 @@
-"username,password,Role"
-"Rudra,Rudra1,Senior Legal Metrology Officer"
-"Manish,Manish1,Lead Compliance Inspector"
-"inspector_delhi,admindelhi,Field Officer - North"
-"IIT,IIT1,Field Officer - South"
+username,password,role
+Rudra,Rudra1,Senior Legal Metrology Officer
+Manish,Manish1,Lead Compliance Inspector
+inspector_delhi,admindelhi,Field Officer - North
+IIT,IIT1,Field Officer - South
