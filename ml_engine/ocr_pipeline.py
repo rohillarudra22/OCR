@@ -1,12 +1,16 @@
 import os
+import shutil
 import cv2
 import numpy as np
 import pytesseract
 
-# Windows fallback path
-tesseract_cmd_path = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-if os.path.exists(tesseract_cmd_path):
-    pytesseract.pytesseract.tesseract_cmd = tesseract_cmd_path
+# Explicit binary check for Linux (Render) and Windows
+if os.path.exists("/usr/bin/tesseract"):
+    pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
+elif shutil.which("tesseract"):
+    pytesseract.pytesseract.tesseract_cmd = shutil.which("tesseract")
+elif os.path.exists(r"C:\Program Files\Tesseract-OCR\tesseract.exe"):
+    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 def preprocess_for_high_accuracy(image_path):
     """
