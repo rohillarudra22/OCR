@@ -1,31 +1,42 @@
 import os
-from PIL import Image
+import requests
 
 def extract_text_from_images(front_path, back_path):
     """
-    Real-time dynamic packaging text reader.
-    Har image se actual text line-by-line read karta hai.
+    Universal Cloud OCR: Har uploaded image ka live text read karta hai.
+    Zero local binary dependency, zero API key requirement.
     """
-    extracted_lines = []
+    extracted_text = []
 
-    try:
-        import pytesseract
-        
-        # Front panel reading
-        if front_path and os.path.exists(front_path):
-            img_front = Image.open(front_path)
-            txt_front = pytesseract.image_to_string(img_front)
-            if txt_front.strip():
-                extracted_lines.append(txt_front.strip())
+    def scan_file(file_path):
+        if not file_path or not os.path.exists(file_path):
+            return ""
+        try:
+            with open(file_path, 'rb') as f:
+                # Free public OCR endpoint (zero token/auth required)
+                r = requests.post(
+                    'https://api.ocr.space/parse/image',
+                    files={'file': f},
+                    data={'language': 'eng', 'isOverlayRequired': False},
+                    headers={'apikey': 'helloworld'},
+                    timeout=20
+                )
+                if r.status_code == 200:
+                    res = r.json()
+                    parsed_results = res.get('ParsedResults', [])
+                    if parsed_results:
+                        return parsed_results[0].get('ParsedText', '').strip()
+        except Exception as err:
+            print(f"OCR request error on {file_path}: {err}")
+        return ""
 
-        # Back panel reading
-        if back_path and os.path.exists(back_path):
-            img_back = Image.open(back_path)
-            txt_back = pytesseract.image_to_string(img_back)
-            if txt_back.strip():
-                extracted_lines.append(txt_back.strip())
+    # Front aur Back dono packaging images scan hongi
+    txt_f = scan_file(front_path)
+    txt_b = scan_file(back_path)
 
-    except Exception as e:
-        print(f"OCR reading error: {e}")
+    if txt_f:
+        extracted_text.append(txt_f)
+    if txt_b:
+        extracted_text.append(txt_b)
 
-    return "\n".join(extracted_lines)
+    return "\n".join(extracted_text)

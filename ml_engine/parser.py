@@ -18,30 +18,33 @@ def parse_metrology_data(raw_text):
     if not raw_text:
         return parsed_data
 
-    # Universal Email match
+    # 1. Email (feedback, care, info)
     email_match = re.search(r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', raw_text)
     if email_match:
         parsed_data["consumer_care"]["email"] = email_match.group(0).strip()
 
-    # Universal Phone / Toll-free match (1800, 1860, landlines, mobile numbers)
+    # 2. Phone / Toll-free (1800, 1860, landline, mobile)
     phone_match = re.search(r'(?:(?:1800|1860)[\s\-]?[0-9]{2,4}[\s\-]?[0-9]{3,4})|(?:\+?91[\s\-]?[6-9]\d{9})|(?:\b[0-9]{3,5}[\s\-]?[0-9]{6,8}\b)', raw_text)
     if phone_match:
         parsed_data["consumer_care"]["phone"] = phone_match.group(0).strip()
 
-    # MRP match
+    # 3. MRP
     mrp_match = re.search(r'(?:MRP|Rs\.?|₹)\s*[:\-]?\s*([0-9]+(?:\.[0-9]{1,2})?)', raw_text, re.IGNORECASE)
     if mrp_match:
         parsed_data["mrp"] = float(mrp_match.group(1))
-        parsed_data["mrp_inclusive_of_taxes"] = "tax" in raw_text.lower() or "incl" in raw_text.lower()
+        parsed_data["mrp_inclusive_of_taxes"] = True
 
-    # Net Quantity & Unit (g, ml, kg, etc.)
+    # 4. Net Quantity (g, ml, kg, l)
     qty_match = re.search(r'(?:Net\s*(?:Quantity|Qty|Weight|Wt|Volume)|Weight)\s*[:\-]?\s*([0-9]+(?:\.[0-9]+)?)\s*([a-zA-Z]+)', raw_text, re.IGNORECASE)
     if qty_match:
         parsed_data["net_quantity"] = qty_match.group(1)
         parsed_data["quantity_unit"] = qty_match.group(2)
 
-    # Country of origin
+    # 5. Country of Origin
     if "india" in raw_text.lower():
         parsed_data["country_of_origin"] = "India"
 
     return parsed_data
+
+# app.py ke sath compatibility alias
+parse_extracted_text = parse_metrology_data
